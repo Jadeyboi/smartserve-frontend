@@ -1,4 +1,5 @@
 import { Header } from "../components";
+import { Link } from "react-router-dom";
 
 function Home() {
   return (
@@ -6,7 +7,7 @@ function Home() {
       <Header />
 
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-8 bg-gray-50">
+      <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-8">
         <div className="text-center max-w-4xl">
           <h1 className="text-5xl font-bold text-gray-900 mb-6">
             Welcome to <span className="text-red-600">SmartServe</span>
@@ -16,7 +17,9 @@ function Home() {
             operations and enhance customer experiences.
           </p>
           <div className="flex justify-center space-x-4">
-            <button className="btn-primary">Get Started</button>
+            <Link to="/dashboard" className="btn-primary">
+              Go to Dashboard
+            </Link>
             <button className="bg-white text-red-600 border-2 border-red-600 px-6 py-3 rounded-lg font-medium hover:bg-red-50 transition-all duration-200 shadow-md">
               Learn More
             </button>
