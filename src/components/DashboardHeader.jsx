@@ -18,7 +18,7 @@ function DashboardHeader() {
           <div className="flex items-center space-x-4">
             <button className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-all duration-200 shadow-md flex items-center space-x-2">
               <User className="w-4 h-4" />
-              <span>Kim Baring</span>
+              <span>Jade Cordero</span>
             </button>
           </div>
         </div>

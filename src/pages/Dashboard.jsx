@@ -11,7 +11,7 @@ function Dashboard() {
   const menuItems = [
     {
       image:
-        "https://images.unsplash.com/photo-1535920527002-bc6c6bdfb3b5?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop&crop=center",
       title: "Breakfast Meals",
       description:
         "Start your day with our delicious breakfast options including eggs, bacon, pancakes, and fresh fruit. Perfect for early risers and brunch lovers.",

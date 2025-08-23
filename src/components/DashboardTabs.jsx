@@ -1,14 +1,33 @@
-import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function DashboardTabs() {
-  const [activeTab, setActiveTab] = useState("menu");
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const tabs = [
-    { id: "menu", label: "Menu" },
-    { id: "restaurant-info", label: "Restaurant Info" },
-    { id: "ai-management", label: "AI Management" },
-    { id: "staff-account", label: "Staff Account Management" },
+    { id: "menu", label: "Menu", path: "/dashboard" },
+    {
+      id: "restaurant-info",
+      label: "Restaurant Info",
+      path: "/restaurant-info",
+    },
+    { id: "ai-management", label: "AI Management", path: "/ai-management" },
+    {
+      id: "staff-account",
+      label: "Staff Account Management",
+      path: "/staff-account",
+    },
   ];
+
+  const handleTabClick = (path) => {
+    navigate(path);
+  };
+
+  const getActiveTab = () => {
+    const currentPath = location.pathname;
+    const activeTab = tabs.find((tab) => tab.path === currentPath);
+    return activeTab ? activeTab.id : "menu";
+  };
 
   return (
     <div className="mb-8">
@@ -16,9 +35,9 @@ function DashboardTabs() {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => handleTabClick(tab.path)}
             className={`pb-4 px-1 font-medium text-lg transition-colors duration-200 ${
-              activeTab === tab.id
+              getActiveTab() === tab.id
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-900"
             }`}
