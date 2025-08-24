@@ -1,26 +1,40 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import axios from "axios";
 
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("kbaring@gmail.com");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-
+  const [error, setError] = useState("");
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt:", { email, password });
 
-    // For demo purposes, navigate to home after login
-    // In a real app, you'd validate credentials first
-    if (email && password) {
-      navigate("/");
+    try {
+      console.log("Login attempt:", { email, password });
+
+      const response = await axios.post(
+        "http://127.0.0.1:5050/users/owners/login",
+        { email, password },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      const data = response.data;
+
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
+
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || "Invalid email or password");
     }
   };
 

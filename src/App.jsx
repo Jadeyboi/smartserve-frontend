@@ -4,7 +4,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { Home, Login, Dashboard, RestaurantBranchPage } from "./pages";
+import { Home, Login, Signup, Dashboard, RestaurantBranchPage } from "./pages";
 
 function App() {
   return (
@@ -12,6 +12,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/branch/:id" element={<RestaurantBranchPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

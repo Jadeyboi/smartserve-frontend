@@ -1,14 +1,23 @@
-import { Link } from "react-router-dom";
-import { ChefHat, User } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChefHat, User, LogOut } from "lucide-react";
 
 function DashboardHeader() {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear the authentication token
+    localStorage.removeItem("access_token");
+    // Redirect to login page
+    navigate("/login");
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center shadow-md">
               <ChefHat className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-bold text-gray-900">SmartServe</span>
@@ -19,6 +28,15 @@ function DashboardHeader() {
             <button className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-all duration-200 shadow-md flex items-center space-x-2">
               <User className="w-4 h-4" />
               <span>Jade Cordero</span>
+            </button>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-all duration-200 shadow-md flex items-center space-x-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
             </button>
           </div>
         </div>
