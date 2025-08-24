@@ -39,19 +39,6 @@ function Login() {
             <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100">
               <LoginForm />
             </div>
-
-            {/* Footer Links */}
-            <div className="text-center mt-6">
-              <p className="text-gray-500 text-sm">
-                Don't have an account?{" "}
-                <a
-                  href="#"
-                  className="text-red-600 hover:text-red-700 font-medium transition-colors"
-                >
-                  Sign up here
-                </a>
-              </p>
-            </div>
           </div>
         </div>
       </div>

@@ -11,3 +11,13 @@
     background-color: #f9fafb !important;
   }
 }
+
+@layer components {
+  .btn-primary {
+    @apply bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-red-600 border-2 border-red-600 px-6 py-3 rounded-lg font-medium hover:bg-red-50 transition-all duration-200 shadow-md;
+  }
+}

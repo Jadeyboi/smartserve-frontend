@@ -28,6 +28,9 @@ function Header() {
             >
               Dashboard
             </Link>
+            <Link to="/signup" className="btn-primary">
+              Sign Up
+            </Link>
             <Link to="/login" className="btn-secondary">
               Login
             </Link>

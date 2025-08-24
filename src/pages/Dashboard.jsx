@@ -1,88 +1,41 @@
 import { DashboardHeader, DashboardTabs } from "../components";
 import { MapPin, Phone, Users, Star, Clock, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 function Dashboard() {
   const navigate = useNavigate();
 
-  // Sample data for restaurant branches - in real implementation this would come from API
-  const restaurantBranches = [
-    {
-      id: 1,
-      name: "Pizza Napoleon - SM City Cebu",
-      location: "SM City Cebu, North Reclamation Area, Cebu City",
-      status: "active",
-      totalTables: 25,
-      totalChairs: 120,
-      occupancyRate: 72,
-      rating: 4.8,
-      phone: "+63 32 123 4567",
-      operatingHours: "10:00 AM - 10:00 PM",
-      manager: "Maria Santos",
-      staffCount: 15,
-      lastUpdated: "2 minutes ago",
-    },
-    {
-      id: 2,
-      name: "Pizza Napoleon - Ayala Center Cebu",
-      location: "Ayala Center Cebu, Cebu Business Park, Cebu City",
-      status: "active",
-      totalTables: 20,
-      totalChairs: 96,
-      occupancyRate: 68,
-      rating: 4.6,
-      phone: "+63 32 234 5678",
-      operatingHours: "11:00 AM - 11:00 PM",
-      manager: "Juan Dela Cruz",
-      staffCount: 12,
-      lastUpdated: "5 minutes ago",
-    },
-    {
-      id: 3,
-      name: "Pizza Napoleon - IT Park",
-      location: "Cebu IT Park, Lahug, Cebu City",
-      status: "active",
-      totalTables: 18,
-      totalChairs: 84,
-      occupancyRate: 55,
-      rating: 4.7,
-      phone: "+63 32 345 6789",
-      operatingHours: "10:00 AM - 9:00 PM",
-      manager: "Ana Rodriguez",
-      staffCount: 10,
-      lastUpdated: "1 minute ago",
-    },
-    {
-      id: 4,
-      name: "Pizza Napoleon - Mactan Airport",
-      location: "Mactan-Cebu International Airport, Lapu-Lapu City",
-      status: "active",
-      totalTables: 12,
-      totalChairs: 60,
-      occupancyRate: 45,
-      rating: 4.5,
-      phone: "+63 32 456 7890",
-      operatingHours: "6:00 AM - 10:00 PM",
-      manager: "Carlos Martinez",
-      staffCount: 8,
-      lastUpdated: "3 minutes ago",
-    },
-    {
-      id: 5,
-      name: "Pizza Napoleon - Talisay",
-      location: "Talisay City, Cebu",
-      status: "planning",
-      totalTables: 22,
-      totalChairs: 108,
-      occupancyRate: 0,
-      rating: 0,
-      phone: "+63 32 567 8901",
-      operatingHours: "Coming Soon",
-      manager: "TBD",
-      staffCount: 0,
-      lastUpdated: "1 hour ago",
-    },
-  ];
+  // State for restaurants and error handling
+  const [restaurantBranches, setRestaurants] = useState([]);
+  const [error, setError] = useState("");
+
+  // Fetch restaurants from backend
+  const fetchRestaurants = () => {
+    const token = localStorage.getItem("access_token");
+    axios
+      .get("http://127.0.0.1:5050/restaurants/owned", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        if (res.data.success) {
+          const data = Array.isArray(res.data.restaurants)
+            ? res.data.restaurants
+            : [];
+          setRestaurants(data);
+        } else {
+          setError(res.data.message || "Failed to fetch restaurants.");
+        }
+      })
+      .catch((err) => {
+        setError(err.response?.data?.error || "Failed to fetch restaurants.");
+      });
+  };
+
+  useEffect(() => {
+    fetchRestaurants();
+  }, []);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -143,6 +96,9 @@ function Dashboard() {
             <span>Add New Branch</span>
           </button>
         </div>
+
+        {/* Error Message */}
+        {error && <div className="mb-6 text-red-600 font-medium">{error}</div>}
 
         {/* Restaurant Branches Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
