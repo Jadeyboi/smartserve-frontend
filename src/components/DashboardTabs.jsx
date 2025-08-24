@@ -5,18 +5,7 @@ function DashboardTabs() {
   const location = useLocation();
 
   const tabs = [
-    { id: "menu", label: "Menu", path: "/dashboard" },
-    {
-      id: "restaurant-info",
-      label: "Restaurant Info",
-      path: "/restaurant-info",
-    },
-    { id: "ai-management", label: "AI Management", path: "/ai-management" },
-    {
-      id: "staff-account",
-      label: "Staff Account Management",
-      path: "/staff-account",
-    },
+    { id: "menu", label: "List of Restaurant Branches", path: "/dashboard" },
   ];
 
   const handleTabClick = (path) => {
