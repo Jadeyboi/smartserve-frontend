@@ -14,22 +14,114 @@ function Dashboard() {
   // Fetch restaurants from backend
   const fetchRestaurants = () => {
     const token = localStorage.getItem("access_token");
+    console.log(
+      "Fetching restaurants with token:",
+      token ? `${token.substring(0, 20)}...` : "No token"
+    );
+
+    if (!token) {
+      setError("No authentication token found. Please login again.");
+      return;
+    }
+
+    console.log("Making API call to fetch restaurants...");
     axios
       .get("http://127.0.0.1:5050/restaurants/owned", {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
+        console.log("API response received:", res.data);
         if (res.data.success) {
           const data = Array.isArray(res.data.restaurants)
             ? res.data.restaurants
             : [];
-          setRestaurants(data);
+
+          // Transform backend data to match frontend expectations
+          const transformedData = data.map((restaurant) => ({
+            id: restaurant.restaurantID || restaurant.id,
+            name: restaurant.restaurantName || "Unknown Restaurant",
+            location: restaurant.address || "Address not specified",
+            status: "active", // Default status since backend doesn't have this
+            totalTables: 0, // Default values since backend doesn't have these
+            totalChairs: 0,
+            occupancyRate: 0,
+            rating: 0,
+            phone: restaurant.contactNumber || "Phone not specified",
+            email: "email@restaurant.com", // Default since backend doesn't have this
+            operatingHours: "10:00 AM - 10:00 PM", // Default
+            manager: "Manager not assigned", // Default
+            staffCount: 0, // Default
+            lastUpdated: "Just now", // Default
+            address: {
+              street: restaurant.address || "Address not specified",
+              area: "Area not specified",
+              city: "City not specified",
+              province: "Province not specified",
+              zipCode: "0000",
+              country: "Philippines",
+            },
+            cuisine: "Cuisine not specified", // Default
+            features: ["Dine-in"], // Default
+            paymentMethods: ["Cash"], // Default
+            averageOrderValue: "₱0", // Default
+            dailyCustomers: "0", // Default
+            monthlyRevenue: "₱0", // Default
+          }));
+
+          // If no restaurants found, add a sample restaurant for testing
+          if (transformedData.length === 0) {
+            console.log("No restaurants found, adding sample data for testing");
+            transformedData.push({
+              id: "sample-1",
+              name: "Sample Restaurant",
+              location: "123 Sample Street, Sample City",
+              status: "active",
+              totalTables: 10,
+              totalChairs: 40,
+              occupancyRate: 75,
+              rating: 4.5,
+              phone: "+63 123 456 7890",
+              email: "sample@restaurant.com",
+              operatingHours: "9:00 AM - 10:00 PM",
+              manager: "John Doe",
+              staffCount: 8,
+              lastUpdated: "2 hours ago",
+              address: {
+                street: "123 Sample Street",
+                area: "Sample Area",
+                city: "Sample City",
+                province: "Sample Province",
+                zipCode: "1234",
+                country: "Philippines",
+              },
+              cuisine: "International",
+              features: ["Dine-in", "Takeout"],
+              paymentMethods: ["Cash", "Credit Card"],
+              averageOrderValue: "₱500",
+              dailyCustomers: "100-150",
+              monthlyRevenue: "₱1.5M",
+            });
+          }
+
+          console.log("Original backend data:", data);
+          console.log("Transformed data:", transformedData);
+
+          setRestaurants(transformedData);
         } else {
           setError(res.data.message || "Failed to fetch restaurants.");
         }
       })
       .catch((err) => {
-        setError(err.response?.data?.error || "Failed to fetch restaurants.");
+        if (err.response?.status === 401) {
+          setError("Authentication failed. Please login again.");
+          // Clear auth data and redirect to login
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("user");
+          navigate("/login");
+        } else {
+          setError(err.response?.data?.error || "Failed to fetch restaurants.");
+        }
       });
   };
 
@@ -91,7 +183,10 @@ function Dashboard() {
 
         {/* Add New Branch Button */}
         <div className="mb-8">
-          <button className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-200">
+          <button
+            onClick={() => navigate("/add-branch")}
+            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors duration-200"
+          >
             <Plus className="w-5 h-5" />
             <span>Add New Branch</span>
           </button>
@@ -101,6 +196,11 @@ function Dashboard() {
         {error && <div className="mb-6 text-red-600 font-medium">{error}</div>}
 
         {/* Restaurant Branches Grid */}
+        <div className="mb-4">
+          <p className="text-sm text-gray-600">
+            Found {restaurantBranches.length} restaurant(s)
+          </p>
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {restaurantBranches.map((branch) => (
             <div

@@ -6,3 +6,4 @@ export { default as RestaurantInfoPage } from "./RestaurantInfoPage";
 export { default as StaffAccountManagement } from "./StaffAccountManagement";
 export { default as AIManagement } from "./AIManagement";
 export { default as RestaurantBranchPage } from "./RestaurantBranchPage";
+export { default as AddRestaurantBranch } from "./AddRestaurantBranch";

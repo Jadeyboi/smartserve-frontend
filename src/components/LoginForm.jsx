@@ -5,7 +5,7 @@ import axios from "axios";
 
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("kbaring@gmail.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const [error, setError] = useState("");
@@ -58,7 +58,7 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full pl-10 pr-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 hover:bg-white"
-              placeholder="Enter your email"
+              placeholder="email address"
               required
             />
           </div>
@@ -81,7 +81,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full pl-10 pr-12 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all duration-200 hover:bg-white"
-              placeholder="Enter your password"
+              placeholder="password"
               required
             />
             <button

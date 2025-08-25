@@ -1,24 +1,67 @@
-const API_BASE_URL = "http://localhost:5050";
+const API_BASE_URL = "http://127.0.0.1:5050";
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("access_token");
+  console.log(
+    "Retrieved token from localStorage:",
+    token ? `${token.substring(0, 20)}...` : "No token found"
+  );
+
+  if (!token) {
+    console.warn("No access token found in localStorage");
+    return {
+      "Content-Type": "application/json",
+    };
+  }
+
+  // Check if token is expired (basic check - you might want to decode and check exp)
   return {
     "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
+    Authorization: `Bearer ${token}`,
   };
 };
 
 // Generic API call function
 const apiCall = async (endpoint, options = {}) => {
   try {
+    // Check if token is expired before making the call
+    if (!isAuthenticated()) {
+      console.warn("Token is expired or invalid, redirecting to login");
+      // Clear expired auth data
+      clearAuth();
+      // Redirect to login (you might want to use a router hook here)
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+      throw new Error("Authentication required");
+    }
+
+    const headers = getAuthHeaders();
+    console.log(`Making API call to: ${API_BASE_URL}${endpoint}`);
+    console.log("Headers:", headers);
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: getAuthHeaders(),
+      headers,
       ...options,
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error(
+        `API call failed with status ${response.status}:`,
+        errorData
+      );
+
+      // If we get a 401, clear the auth data and redirect
+      if (response.status === 401) {
+        console.warn("Received 401, clearing auth data");
+        clearAuth();
+        if (typeof window !== "undefined") {
+          window.location.href = "/login";
+        }
+      }
+
       throw new Error(
         errorData.message ||
           errorData.error ||
@@ -51,7 +94,8 @@ export const authAPI = {
 
   logout: async () => {
     // Backend doesn't have logout endpoint, just clear local storage
-    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
     return { message: "Logged out successfully" };
   },
@@ -207,29 +251,58 @@ export const staffAPI = {
   },
 
   getByRestaurant: async (restaurantId) => {
-    // Backend doesn't have get users by restaurant endpoint yet
-    // Return mock data for now
-    return [
-      {
-        id: 1,
-        name: "Juan Dela Cruz",
-        role: "Chef",
-        email: "juan@pizzanapoleon.com",
-        status: "active",
-      },
-      {
-        id: 2,
-        name: "Ana Rodriguez",
-        role: "Cashier",
-        email: "ana@pizzanapoleon.com",
-        status: "active",
-      },
-    ];
+    try {
+      // Try to get staff from backend first
+      const response = await apiCall(
+        `/users/staffs?restaurantID=${restaurantId}`
+      );
+      if (response && Array.isArray(response)) {
+        return response.map((staff) => ({
+          id: staff.id,
+          name: `${staff.firstname} ${staff.lastname}`.trim(),
+          role: staff.position,
+          email: staff.email,
+          status: "active", // Backend doesn't have status field yet
+          lastLogin: staff.lastLogin || "Never",
+        }));
+      }
+      return [];
+    } catch (error) {
+      console.warn(
+        "Failed to fetch staff from backend, using mock data:",
+        error
+      );
+      // Fallback to mock data if backend call fails
+      return [
+        {
+          id: 1,
+          name: "Juan Dela Cruz",
+          role: "Chef",
+          email: "juan@pizzanapoleon.com",
+          status: "active",
+        },
+        {
+          id: 2,
+          name: "Ana Rodriguez",
+          role: "Cashier",
+          email: "ana@pizzanapoleon.com",
+          status: "active",
+        },
+      ];
+    }
   },
 
   create: async (staffData) => {
-    // Backend doesn't have create user endpoint yet
-    throw new Error("Staff creation not implemented");
+    try {
+      const response = await apiCall("/users/staffs/signup", {
+        method: "POST",
+        body: JSON.stringify(staffData),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to create staff member:", error);
+      throw error;
+    }
   },
 
   update: async (id, staffData) => {
@@ -250,8 +323,24 @@ export const staffAPI = {
 
 // Utility functions
 export const isAuthenticated = () => {
-  const token = localStorage.getItem("token");
-  return !!token;
+  const token = localStorage.getItem("access_token");
+  if (!token) return false;
+
+  try {
+    // Basic JWT expiration check (decode without verification for expiration only)
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp && payload.exp < now) {
+      console.warn("Token is expired, clearing auth data");
+      clearAuth();
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Error checking token expiration:", error);
+    clearAuth();
+    return false;
+  }
 };
 
 export const getCurrentUser = () => {
@@ -260,7 +349,8 @@ export const getCurrentUser = () => {
 };
 
 export const clearAuth = () => {
-  localStorage.removeItem("token");
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
   localStorage.removeItem("user");
 };
 
