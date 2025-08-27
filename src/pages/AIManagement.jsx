@@ -1,4 +1,6 @@
 import { DashboardHeader } from "../components";
+import { AddAICard, AIInstanceCard } from "../components";
+import { useState } from "react";
 import {
   Camera,
   Users,
@@ -12,9 +14,30 @@ import {
   AlertCircle,
   CheckCircle,
   Eye,
+  Bot,
 } from "lucide-react";
 
 function AIManagement() {
+  // State for AI instances
+  const [aiInstances, setAiInstances] = useState([
+    {
+      id: 1,
+      name: "YOLO Table Detection",
+      url: "https://api.smartserve.com/yolo/table-detection",
+      status: "running",
+      isRunning: true,
+      lastActive: "2 seconds ago",
+    },
+    {
+      id: 2,
+      name: "Customer Count AI",
+      url: "https://api.smartserve.com/ai/customer-count",
+      status: "stopped",
+      isRunning: false,
+      lastActive: "5 minutes ago",
+    },
+  ]);
+
   // Mock data - in real implementation this would come from YOLO AI API
   const aiStatus = {
     cameraStatus: "Online",
@@ -118,6 +141,44 @@ function AIManagement() {
     );
   };
 
+  const handleStartAI = (aiId) => {
+    setAiInstances((prev) =>
+      prev.map((ai) =>
+        ai.id === aiId ? { ...ai, isRunning: true, status: "running" } : ai
+      )
+    );
+    // TODO: Implement actual start logic
+    console.log("Starting AI:", aiId);
+  };
+
+  const handleStopAI = (aiId) => {
+    setAiInstances((prev) =>
+      prev.map((ai) =>
+        ai.id === aiId ? { ...ai, isRunning: false, status: "stopped" } : ai
+      )
+    );
+    // TODO: Implement actual stop logic
+    console.log("Stopping AI:", aiId);
+  };
+
+  const handleDeleteAI = (aiId) => {
+    setAiInstances((prev) => prev.filter((ai) => ai.id !== aiId));
+    // TODO: Implement actual delete logic
+    console.log("Deleting AI:", aiId);
+  };
+
+  const handleAddAI = (newAI) => {
+    const aiInstance = {
+      id: Date.now(),
+      name: newAI.name,
+      url: newAI.url,
+      status: "stopped",
+      isRunning: false,
+      lastActive: "Never",
+    };
+    setAiInstances((prev) => [...prev, aiInstance]);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader />
@@ -132,6 +193,39 @@ function AIManagement() {
           <p className="text-gray-600 text-lg">
             Real-time monitoring powered by YOLO AI camera system
           </p>
+        </div>
+
+        {/* AI Instances Management */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-3xl font-bold text-gray-900">
+              AI Instances Management
+            </h2>
+            <div className="flex items-center space-x-2">
+              <Bot className="w-6 h-6 text-blue-600" />
+              <span className="text-blue-600 font-semibold">
+                Manage AI Services
+              </span>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <AddAICard onAddAI={handleAddAI} />
+          </div>
+
+          {aiInstances.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {aiInstances.map((ai) => (
+                <AIInstanceCard
+                  key={ai.id}
+                  ai={ai}
+                  onStart={handleStartAI}
+                  onStop={handleStopAI}
+                  onDelete={handleDeleteAI}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* AI System Status */}
