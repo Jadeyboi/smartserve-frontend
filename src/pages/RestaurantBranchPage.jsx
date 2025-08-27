@@ -1,4 +1,4 @@
-import { DashboardHeader } from "../components";
+import { DashboardHeader, AddAICard, AIInstanceCard } from "../components";
 import {
   MapPin,
   Phone,
@@ -71,6 +71,26 @@ function RestaurantBranchPage() {
   const [staffFilterRole, setStaffFilterRole] = useState("");
   const [showBulkActions, setShowBulkActions] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState([]);
+
+  // AI Management state
+  const [aiInstances, setAiInstances] = useState([
+    {
+      id: 1,
+      name: "YOLO Table Detection",
+      url: "https://api.smartserve.com/yolo/table-detection",
+      status: "running",
+      isRunning: true,
+      lastActive: "2 seconds ago",
+    },
+    {
+      id: 2,
+      name: "Customer Count AI",
+      url: "https://api.smartserve.com/ai/customer-count",
+      status: "stopped",
+      isRunning: false,
+      lastActive: "5 minutes ago",
+    },
+  ]);
 
   // Fetch branch data from backend API
   useEffect(() => {
@@ -628,6 +648,45 @@ function RestaurantBranchPage() {
     alert(`Deleted ${selectedStaff.length} staff members successfully`);
   };
 
+  // AI Management handlers
+  const handleStartAI = (aiId) => {
+    setAiInstances((prev) =>
+      prev.map((ai) =>
+        ai.id === aiId ? { ...ai, isRunning: true, status: "running" } : ai
+      )
+    );
+    // TODO: Implement actual start logic
+    console.log("Starting AI:", aiId);
+  };
+
+  const handleStopAI = (aiId) => {
+    setAiInstances((prev) =>
+      prev.map((ai) =>
+        ai.id === aiId ? { ...ai, isRunning: false, status: "stopped" } : ai
+      )
+    );
+    // TODO: Implement actual stop logic
+    console.log("Stopping AI:", aiId);
+  };
+
+  const handleDeleteAI = (aiId) => {
+    setAiInstances((prev) => prev.filter((ai) => ai.id !== aiId));
+    // TODO: Implement actual delete logic
+    console.log("Deleting AI:", aiId);
+  };
+
+  const handleAddAI = (newAI) => {
+    const aiInstance = {
+      id: Date.now(),
+      name: newAI.name,
+      url: newAI.url,
+      status: "stopped",
+      isRunning: false,
+      lastActive: "Never",
+    };
+    setAiInstances((prev) => [...prev, aiInstance]);
+  };
+
   const getStatusColor = (status) => {
     return status === "occupied" ? "text-red-600" : "text-green-600";
   };
@@ -1069,13 +1128,115 @@ function RestaurantBranchPage() {
         )}
 
         {activeTab === "ai" && (
-          <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              AI Management
-            </h2>
-            <p className="text-gray-600">
-              Monitor YOLO AI system status and real-time table occupancy data.
-            </p>
+          <div className="space-y-8">
+            {/* AI Instances Management */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-3xl font-bold text-gray-900">
+                  AI Instances Management
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <span className="text-blue-600 font-semibold">
+                    Manage AI Services
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <AddAICard onAddAI={handleAddAI} />
+              </div>
+
+              {aiInstances.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {aiInstances.map((ai) => (
+                    <AIInstanceCard
+                      key={ai.id}
+                      ai={ai}
+                      onStart={handleStartAI}
+                      onStop={handleStopAI}
+                      onDelete={handleDeleteAI}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* AI System Status */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-3xl font-bold text-gray-900">
+                  System Status
+                </h2>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="text-green-600 font-semibold">
+                    AI System Active
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="bg-blue-50 rounded-xl p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-lg">📷</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-blue-600 font-medium">
+                        Camera Status
+                      </p>
+                      <p className="text-2xl font-bold text-blue-900">Online</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 rounded-xl p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-lg">⚡</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-green-600 font-medium">
+                        AI Confidence
+                      </p>
+                      <p className="text-2xl font-bold text-green-900">94.5%</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-purple-50 rounded-xl p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-lg">🕒</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-purple-600 font-medium">
+                        Last Update
+                      </p>
+                      <p className="text-2xl font-bold text-purple-900">
+                        2 seconds ago
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-orange-50 rounded-xl p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-lg">📊</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-orange-600 font-medium">
+                        Data Quality
+                      </p>
+                      <p className="text-2xl font-bold text-orange-900">
+                        Excellent
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

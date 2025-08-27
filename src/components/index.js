@@ -5,5 +5,7 @@ export { default as RestaurantInfo } from "./RestaurantInfo";
 export { default as DashboardTabs } from "./DashboardTabs";
 export { default as MenuCard } from "./MenuCard";
 export { default as AddNewCard } from "./AddNewCard";
+export { default as AddAICard } from "./AddAICard";
+export { default as AIInstanceCard } from "./AIInstanceCard";
 export { default as Label } from "./Label";
 export { default as Input } from "./Input";
