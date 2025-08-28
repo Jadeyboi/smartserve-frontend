@@ -22,8 +22,10 @@ const getAuthHeaders = () => {
   };
 };
 
-// Generic API call function
-const apiCall = async (endpoint, options = {}) => {
+// Generic API call function with retry mechanism
+const apiCall = async (endpoint, options = {}, retryCount = 0) => {
+  const maxRetries = 2;
+
   try {
     // Check if token is expired before making the call
     if (!isAuthenticated()) {
@@ -38,7 +40,11 @@ const apiCall = async (endpoint, options = {}) => {
     }
 
     const headers = getAuthHeaders();
-    console.log(`Making API call to: ${API_BASE_URL}${endpoint}`);
+    console.log(
+      `Making API call to: ${API_BASE_URL}${endpoint} (attempt ${
+        retryCount + 1
+      })`
+    );
     console.log("Headers:", headers);
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -71,7 +77,32 @@ const apiCall = async (endpoint, options = {}) => {
 
     return await response.json();
   } catch (error) {
-    console.error(`API call to ${endpoint} failed:`, error);
+    console.error(
+      `API call to ${endpoint} failed (attempt ${retryCount + 1}):`,
+      error
+    );
+
+    // Handle specific error types
+    if (
+      error.name === "TypeError" &&
+      error.message.includes("Failed to fetch")
+    ) {
+      // This usually indicates CORS or network issues
+      console.warn(
+        `CORS or network error for ${endpoint}. This might be due to:`
+      );
+      console.warn("1. Backend server not running");
+      console.warn("2. CORS not configured properly");
+      console.warn("3. Network connectivity issues");
+
+      // Retry logic for network issues
+      if (retryCount < maxRetries) {
+        console.log(`Retrying API call to ${endpoint} in 1 second...`);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return apiCall(endpoint, options, retryCount + 1);
+      }
+    }
+
     throw error;
   }
 };
@@ -180,66 +211,205 @@ export const menuAPI = {
   },
 };
 
-// AI Management API calls - Updated to match backend
+// AI Management API calls
 export const aiAPI = {
-  getStatus: async () => {
-    // Backend doesn't have general status endpoint
-    return {
-      cameraStatus: "Online",
-      lastUpdate: "5 seconds ago",
-      aiConfidence: 96.2,
-    };
+  // Get all AIs for a restaurant
+  getAIs: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/ai/list?restaurantID=${restaurantId}`);
+      return response.ais || [];
+    } catch (error) {
+      console.error("Failed to get AIs:", error);
+      throw error;
+    }
   },
 
+  // Add new AI
+  addAI: async (aiData) => {
+    try {
+      const response = await apiCall("/ai/add/ai", {
+        method: "POST",
+        body: JSON.stringify(aiData),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to add AI:", error);
+      throw error;
+    }
+  },
+
+  // Start AI detection
+  startDetection: async (restaurantId, aiId) => {
+    try {
+      const response = await apiCall("/ai/start", {
+        method: "POST",
+        body: JSON.stringify({
+          restaurantID: restaurantId,
+          aiID: aiId,
+        }),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to start AI detection:", error);
+      throw error;
+    }
+  },
+
+  // Test YOLO with live camera
+  testCameraDetection: async (restaurantId, cameraIndex = "0") => {
+    try {
+      const response = await apiCall("/ai/test-camera", {
+        method: "POST",
+        body: JSON.stringify({
+          restaurantID: restaurantId,
+          cameraIndex: cameraIndex,
+        }),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to test camera detection:", error);
+      throw error;
+    }
+  },
+
+  // Start camera detection (simple GET endpoint)
+  startCameraDetection: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/ai/start-camera/${restaurantId}`);
+      return response;
+    } catch (error) {
+      console.error("Failed to start camera detection:", error);
+      throw error;
+    }
+  },
+
+  // Stop AI detection
+  stopDetection: async (aiId) => {
+    try {
+      const response = await apiCall(`/ai/stop/${aiId}`, {
+        method: "POST",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to stop AI detection:", error);
+      throw error;
+    }
+  },
+
+  // Get latest detection data
+  getLatestDetection: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/ai/latest/${restaurantId}`);
+      return response;
+    } catch (error) {
+      console.error("Failed to get latest detection:", error);
+      // Return fallback data if backend fails
+      return {
+        chairs: {
+          chair_1: "occupied",
+          chair_2: "vacant",
+          chair_3: "occupied",
+          chair_4: "vacant",
+        },
+        tables: {
+          table_1: "occupied",
+          table_2: "occupied",
+          table_3: "vacant",
+          table_4: "occupied",
+        },
+        time: new Date().toISOString(),
+      };
+    }
+  },
+
+  // Get table status for a restaurant
   getTableStatus: async (restaurantId) => {
-    // Backend doesn't have table status endpoint yet
-    // Return mock data for now
-    return {
-      cameraStatus: "Online",
-      lastUpdate: "5 seconds ago",
-      aiConfidence: 96.2,
-      tableStatus: [
-        {
-          id: 1,
-          status: "occupied",
-          seats: 4,
-          occupiedSeats: 4,
-          timeOccupied: "45 min",
-        },
-        {
-          id: 2,
-          status: "vacant",
-          seats: 6,
-          occupiedSeats: 0,
-          timeOccupied: "0 min",
-        },
-      ],
-    };
+    try {
+      const response = await apiCall(`/ai/latest/${restaurantId}`);
+      return response;
+    } catch (error) {
+      console.error("Failed to get table status:", error);
+      // Return fallback data if backend fails
+      return {
+        cameraStatus: "Online",
+        lastUpdate: "5 seconds ago",
+        aiConfidence: 96.2,
+        tableStatus: [
+          {
+            id: 1,
+            status: "occupied",
+            seats: 4,
+            occupiedSeats: 4,
+            timeOccupied: "45 min",
+          },
+          {
+            id: 2,
+            status: "vacant",
+            seats: 6,
+            occupiedSeats: 0,
+            timeOccupied: "0 min",
+          },
+        ],
+      };
+    }
   },
 
-  updateTableStatus: async (restaurantId, tableData) => {
-    // Backend doesn't have table status update endpoint yet
-    throw new Error("Table status update not implemented");
+  // Update detection data
+  updateDetection: async () => {
+    try {
+      const response = await apiCall("/ai/update", {
+        method: "POST",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to update detection:", error);
+      throw error;
+    }
   },
 
-  // Backend AI endpoints
-  startDetection: async () => {
-    return apiCall("/ai/start", { method: "POST" });
+  // Switch camera
+  switchCamera: async (aiId, direction) => {
+    try {
+      const response = await apiCall(`/ai/${direction}/${aiId}`, {
+        method: "POST",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to switch camera:", error);
+      throw error;
+    }
   },
 
-  stopDetection: async () => {
-    return apiCall("/ai/stop", { method: "POST" });
+  // Get video feed URL
+  getVideoFeedUrl: (aiId) => {
+    return `${API_BASE_URL}/ai/video_feed/${aiId}`;
   },
 
-  getLatestDetection: async () => {
-    return apiCall("/ai/latest");
+  // Update AI settings
+  updateAI: async (aiId, aiData) => {
+    try {
+      const response = await apiCall(`/ai/update/${aiId}`, {
+        method: "PUT",
+        body: JSON.stringify(aiData),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to update AI:", error);
+      throw error;
+    }
   },
 
-  updateDetection: async (data) => {
-    return apiCall("/ai/update", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+  // Delete AI
+  deleteAI: async (aiId) => {
+    try {
+      const response = await apiCall(`/ai/delete/${aiId}`, {
+        method: "DELETE",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to delete AI:", error);
+      throw error;
+    }
   },
 };
 

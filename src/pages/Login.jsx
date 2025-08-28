@@ -1,4 +1,14 @@
 import { Header, LoginForm } from "../components";
+import toast from "react-hot-toast";
+
+function Example() {
+  const handleClick = () => {
+    toast.success("Reservation saved successfully!");
+    // or toast.error("Failed to save reservation");
+  };
+
+  return <button onClick={handleClick}>Save</button>;
+}
 
 function Login() {
   return (

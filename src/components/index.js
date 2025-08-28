@@ -9,3 +9,6 @@ export { default as AddAICard } from "./AddAICard";
 export { default as AIInstanceCard } from "./AIInstanceCard";
 export { default as Label } from "./Label";
 export { default as Input } from "./Input";
+export { default as StaffLoginForm } from "./StaffLoginForm";
+export { default as StaffDashboard } from "./StaffDashboard";
+export { default as StaffHeader } from "./StaffHeader";
