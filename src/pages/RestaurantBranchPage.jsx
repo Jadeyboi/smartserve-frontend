@@ -25,10 +25,19 @@ import {
   UserX,
   Trash2,
   Search,
+  Bell,
+  AlertCircle,
+  CheckCircle,
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { restaurantAPI, menuAPI, aiAPI, staffAPI } from "../utils/api";
+import {
+  restaurantAPI,
+  menuAPI,
+  aiAPI,
+  staffAPI,
+  reservationsAPI,
+} from "../utils/api";
 import axios from "axios";
 
 function RestaurantBranchPage() {
@@ -73,24 +82,78 @@ function RestaurantBranchPage() {
   const [selectedStaff, setSelectedStaff] = useState([]);
 
   // AI Management state
-  const [aiInstances, setAiInstances] = useState([
-    {
-      id: 1,
-      name: "YOLO Table Detection",
-      url: "https://api.smartserve.com/yolo/table-detection",
-      status: "running",
-      isRunning: true,
-      lastActive: "2 seconds ago",
-    },
-    {
-      id: 2,
-      name: "Customer Count AI",
-      url: "https://api.smartserve.com/ai/customer-count",
-      status: "stopped",
-      isRunning: false,
-      lastActive: "5 minutes ago",
-    },
-  ]);
+  const [aiInstances, setAiInstances] = useState([]);
+
+  // Reservation state
+  const [reservationData, setReservationData] = useState({
+    pending: [],
+    confirmed: [],
+    rejected: [],
+    loading: true,
+    error: null,
+  });
+
+  // Function to fetch reservation data
+  const fetchReservationData = async (restaurantId) => {
+    try {
+      console.log("🔍 Fetching reservation data for restaurant:", restaurantId);
+      console.log("🔍 Using reservationsAPI:", reservationsAPI);
+
+      // Check authentication status
+      const token = localStorage.getItem("idToken");
+      const currentUser =
+        localStorage.getItem("currentUser") || localStorage.getItem("user");
+      console.log("🔐 Authentication check:");
+      console.log("  - Token exists:", !!token);
+      console.log(
+        "  - Token preview:",
+        token ? `${token.substring(0, 20)}...` : "No token"
+      );
+      console.log(
+        "  - Current user:",
+        currentUser ? JSON.parse(currentUser) : "No user"
+      );
+
+      if (!token) {
+        throw new Error("No authentication token found. Please login again.");
+      }
+
+      const [pendingReservations, confirmedReservations, rejectedReservations] =
+        await Promise.all([
+          reservationsAPI.getPending(restaurantId),
+          reservationsAPI.getConfirmed(restaurantId),
+          reservationsAPI.getRejected(restaurantId),
+        ]);
+
+      console.log("✅ Reservation data fetched successfully:", {
+        pending: pendingReservations,
+        confirmed: confirmedReservations,
+        rejected: rejectedReservations,
+      });
+
+      setReservationData({
+        pending: pendingReservations || [],
+        confirmed: confirmedReservations || [],
+        rejected: rejectedReservations || [],
+        loading: false,
+        error: null,
+      });
+    } catch (error) {
+      console.error("❌ Error fetching reservation data:", error);
+      console.error("❌ Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+      setReservationData({
+        pending: [],
+        confirmed: [],
+        rejected: [],
+        loading: false,
+        error: error.message,
+      });
+    }
+  };
 
   // Fetch branch data from backend API
   useEffect(() => {
@@ -138,51 +201,8 @@ function RestaurantBranchPage() {
 
           setBranchData(transformedBranch);
         } catch (apiError) {
-          console.error("API call failed, using mock data:", apiError);
-          // Use mock data if API fails
-          setBranchData({
-            id: parseInt(id),
-            name: "Pizza Napoleon - SM City Cebu",
-            location:
-              "SM City Cebu, North Reclamation Area, Cebu City, Philippines",
-            status: "active",
-            totalTables: 25,
-            totalChairs: 120,
-            occupancyRate: 72,
-            rating: 4.8,
-            phone: "+63 32 123 4567",
-            email: "smcity@pizzanapoleon.com",
-            operatingHours: "10:00 AM - 10:00 PM",
-            manager: "Maria Santos",
-            staffCount: 15,
-            lastUpdated: "2 minutes ago",
-            address: {
-              street: "SM City Cebu",
-              area: "North Reclamation Area",
-              city: "Cebu City",
-              province: "Cebu",
-              zipCode: "6000",
-              country: "Philippines",
-            },
-            cuisine: "Italian, Pizza, Mediterranean",
-            features: [
-              "Dine-in",
-              "Delivery",
-              "Takeout",
-              "Catering",
-              "Private Events",
-            ],
-            paymentMethods: [
-              "Cash",
-              "Credit Card",
-              "Debit Card",
-              "Digital Wallets",
-              "Online Payment",
-            ],
-            averageOrderValue: "₱450",
-            dailyCustomers: "150-200",
-            monthlyRevenue: "₱2.5M",
-          });
+          console.error("API call failed:", apiError);
+          setError("Failed to load restaurant data");
         }
 
         // Fetch menu data
@@ -228,27 +248,7 @@ function RestaurantBranchPage() {
           setAiData(ai);
         } catch (err) {
           console.warn("AI data not available:", err);
-          setAiData({
-            cameraStatus: "Online",
-            lastUpdate: "5 seconds ago",
-            aiConfidence: 96.2,
-            tableStatus: [
-              {
-                id: 1,
-                status: "occupied",
-                seats: 4,
-                occupiedSeats: 4,
-                timeOccupied: "45 min",
-              },
-              {
-                id: 2,
-                status: "vacant",
-                seats: 6,
-                occupiedSeats: 0,
-                timeOccupied: "0 min",
-              },
-            ],
-          });
+          setAiData({});
         }
 
         // Fetch staff data
@@ -257,23 +257,11 @@ function RestaurantBranchPage() {
           setStaffData(staff);
         } catch (err) {
           console.warn("Staff data not available:", err);
-          setStaffData([
-            {
-              id: 1,
-              name: "Juan Dela Cruz",
-              role: "Chef",
-              email: "juan@pizzanapoleon.com",
-              status: "active",
-            },
-            {
-              id: 2,
-              name: "Ana Rodriguez",
-              role: "Cashier",
-              email: "ana@pizzanapoleon.com",
-              status: "active",
-            },
-          ]);
+          setStaffData([]);
         }
+
+        // Fetch reservation data
+        await fetchReservationData(id);
       } catch (err) {
         console.error("Error fetching data:", err);
         setError(err.message);
@@ -294,7 +282,7 @@ function RestaurantBranchPage() {
     setStaffFormLoading(true);
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("idToken");
 
       // Split full name into first, middle, and last names
       const nameParts = signupForm.fullName.trim().split(" ");
@@ -385,7 +373,7 @@ function RestaurantBranchPage() {
     setMenuFormLoading(true);
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("idToken");
       const response = await axios.post(
         "http://127.0.0.1:5050/menus/add/menu",
         {
@@ -418,7 +406,7 @@ function RestaurantBranchPage() {
     setDishFormLoading(true);
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("idToken");
       const response = await axios.post(
         "http://127.0.0.1:5050/dishes/add/dish",
         {
@@ -732,6 +720,7 @@ function RestaurantBranchPage() {
   const tabs = [
     { id: "overview", label: "Overview", icon: "📊" },
     { id: "menu", label: "Menu Management", icon: "🍽️" },
+    { id: "reservations", label: "Reservations", icon: "📅" },
     { id: "ai", label: "AI Management", icon: "🤖" },
     { id: "staff", label: "Staff Management", icon: "👥" },
   ];
@@ -1127,6 +1116,236 @@ function RestaurantBranchPage() {
           </div>
         )}
 
+        {activeTab === "reservations" && (
+          <div className="space-y-8">
+            {/* Reservations Management Header */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Reservation Management
+                  </h2>
+                  <p className="text-gray-600 mt-2">
+                    Manage reservations for {branchData.name}
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate(`/pending?restaurant=${id}`)}
+                  className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                >
+                  <Bell className="w-4 h-4" />
+                  <span>View All Reservations</span>
+                </button>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="bg-yellow-50 rounded-xl p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-yellow-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-lg">⏳</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-yellow-600 font-medium">
+                        Pending Reservations
+                      </p>
+                      <p className="text-2xl font-bold text-yellow-900">
+                        {reservationData.loading
+                          ? "..."
+                          : reservationData.pending.length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 rounded-xl p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-lg">✅</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-green-600 font-medium">
+                        Confirmed Reservations
+                      </p>
+                      <p className="text-2xl font-bold text-green-900">
+                        {reservationData.loading
+                          ? "..."
+                          : reservationData.confirmed.length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-red-50 rounded-xl p-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-lg">❌</span>
+                    </div>
+                    <div>
+                      <p className="text-sm text-red-600 font-medium">
+                        Rejected Reservations
+                      </p>
+                      <p className="text-2xl font-bold text-red-900">
+                        {reservationData.loading
+                          ? "..."
+                          : reservationData.rejected.length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="flex space-x-4">
+                <button
+                  onClick={() =>
+                    navigate(`/pending?restaurant=${id}&tab=pending`)
+                  }
+                  className="flex items-center space-x-2 bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                >
+                  <Bell className="w-4 h-4" />
+                  <span>Manage Pending</span>
+                </button>
+                <button
+                  onClick={() =>
+                    navigate(`/pending?restaurant=${id}&tab=confirmed`)
+                  }
+                  className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                >
+                  <Calendar className="w-4 h-4" />
+                  <span>View Confirmed</span>
+                </button>
+                <button
+                  onClick={() =>
+                    navigate(`/pending?restaurant=${id}&tab=rejected`)
+                  }
+                  className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                >
+                  <UserX className="w-4 h-4" />
+                  <span>View Rejected</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Recent Reservations Preview */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">
+                Recent Reservations
+              </h3>
+
+              {reservationData.loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading reservations...</p>
+                </div>
+              ) : reservationData.error ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-red-400" />
+                  </div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">
+                    Error Loading Reservations
+                  </h4>
+                  <p className="text-gray-600 mb-4">{reservationData.error}</p>
+                  <button
+                    onClick={() => fetchReservationData(id)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : reservationData.pending.length +
+                  reservationData.confirmed.length +
+                  reservationData.rejected.length ===
+                0 ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">
+                    No Reservations Yet
+                  </h4>
+                  <p className="text-gray-600 mb-4">
+                    Reservations will appear here once customers start making
+                    bookings.
+                  </p>
+                  <button
+                    onClick={() => navigate(`/pending?restaurant=${id}`)}
+                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                  >
+                    View All Reservations
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Show recent pending reservations */}
+                  {reservationData.pending.slice(0, 3).map((reservation) => (
+                    <div
+                      key={reservation.reservationID || reservation.id}
+                      className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-yellow-600 rounded-full flex items-center justify-center">
+                          <Bell className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {reservation.customerName}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {reservation.capacity} people •{" "}
+                            {reservation.reservationDate} at{" "}
+                            {reservation.reservationTime}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full font-medium">
+                        Pending
+                      </span>
+                    </div>
+                  ))}
+
+                  {/* Show recent confirmed reservations */}
+                  {reservationData.confirmed.slice(0, 2).map((reservation) => (
+                    <div
+                      key={reservation.reservationID || reservation.id}
+                      className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                          <CheckCircle className="w-4 h-4 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">
+                            {reservation.customerName}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            {reservation.capacity} people •{" "}
+                            {reservation.reservationDate} at{" "}
+                            {reservation.reservationTime}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">
+                        Confirmed
+                      </span>
+                    </div>
+                  ))}
+
+                  <div className="text-center pt-4">
+                    <button
+                      onClick={() => navigate(`/pending?restaurant=${id}`)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors duration-200"
+                    >
+                      View All Reservations
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === "ai" && (
           <div className="space-y-8">
             {/* AI Instances Management */}
@@ -1185,7 +1404,9 @@ function RestaurantBranchPage() {
                       <p className="text-sm text-blue-600 font-medium">
                         Camera Status
                       </p>
-                      <p className="text-2xl font-bold text-blue-900">Online</p>
+                      <p className="text-2xl font-bold text-blue-900">
+                        {aiData.cameraStatus || "Offline"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1199,7 +1420,11 @@ function RestaurantBranchPage() {
                       <p className="text-sm text-green-600 font-medium">
                         AI Confidence
                       </p>
-                      <p className="text-2xl font-bold text-green-900">94.5%</p>
+                      <p className="text-2xl font-bold text-green-900">
+                        {aiData.aiConfidence
+                          ? `${aiData.aiConfidence}%`
+                          : "N/A"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1214,7 +1439,7 @@ function RestaurantBranchPage() {
                         Last Update
                       </p>
                       <p className="text-2xl font-bold text-purple-900">
-                        2 seconds ago
+                        {aiData.lastUpdate || "Never"}
                       </p>
                     </div>
                   </div>
@@ -1230,7 +1455,7 @@ function RestaurantBranchPage() {
                         Data Quality
                       </p>
                       <p className="text-2xl font-bold text-orange-900">
-                        Excellent
+                        {aiData.dataQuality || "Unknown"}
                       </p>
                     </div>
                   </div>

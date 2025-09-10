@@ -27,7 +27,7 @@ function AddRestaurantBranch() {
     setError("");
 
     try {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("idToken");
       console.log("Submitting restaurant data:", formData);
       console.log(
         "Using token:",
@@ -56,8 +56,7 @@ function AddRestaurantBranch() {
       if (err.response?.status === 401) {
         setError("Authentication failed. Please login again.");
         // Clear auth data and redirect to login
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+        localStorage.removeItem("idToken");
         localStorage.removeItem("user");
         navigate("/login");
       } else {

@@ -139,36 +139,21 @@ function AIManagement() {
         });
       }
     } catch (error) {
-      console.warn("Failed to load AI data, using fallback:", error);
-      showToast.error("Failed to load AI detection data, using fallback");
+      console.warn("Failed to load AI data:", error);
+      showToast.error("Failed to load AI detection data");
 
-      // Use fallback data if backend fails
-      setTableStatus([
-        {
-          id: 1,
-          status: "occupied",
-          seats: 4,
-          occupiedSeats: 4,
-          timeOccupied: "45 min",
-        },
-        {
-          id: 2,
-          status: "vacant",
-          seats: 6,
-          occupiedSeats: 0,
-          timeOccupied: "0 min",
-        },
-      ]);
+      // Set empty state when backend fails
+      setTableStatus([]);
       setAiStatus({
         cameraStatus: "Offline",
         lastUpdate: "Never",
-        totalTables: 2,
-        totalChairs: 10,
-        occupiedTables: 1,
-        vacantTables: 1,
-        occupiedChairs: 4,
-        vacantChairs: 6,
-        occupancyRate: 50,
+        totalTables: 0,
+        totalChairs: 0,
+        occupiedTables: 0,
+        vacantTables: 0,
+        occupiedChairs: 0,
+        vacantChairs: 0,
+        occupancyRate: 0,
         aiConfidence: 0,
       });
     } finally {
@@ -610,7 +595,7 @@ function AIManagement() {
                     Data Quality
                   </p>
                   <p className="text-2xl font-bold text-orange-900">
-                    Excellent
+                    {aiStatus.dataQuality || "Unknown"}
                   </p>
                 </div>
               </div>

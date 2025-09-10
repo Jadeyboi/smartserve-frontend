@@ -31,30 +31,8 @@ function StaffDashboard() {
       setCurrentTime(new Date());
     }, 60000);
 
-    // Mock notifications
-    setNotifications([
-      {
-        id: 1,
-        type: "order",
-        message: "New order #1234 received",
-        time: "2 min ago",
-        read: false,
-      },
-      {
-        id: 2,
-        type: "table",
-        message: "Table 5 is ready for service",
-        time: "5 min ago",
-        read: false,
-      },
-      {
-        id: 3,
-        type: "inventory",
-        message: "Low stock alert: Tomatoes",
-        time: "1 hour ago",
-        read: true,
-      },
-    ]);
+    // Initialize empty notifications
+    setNotifications([]);
 
     return () => clearInterval(timer);
   }, []);
@@ -165,8 +143,8 @@ function StaffDashboard() {
                 <p className="text-sm font-medium text-gray-600">
                   Active Orders
                 </p>
-                <p className="text-2xl font-bold text-gray-900">12</p>
-                <p className="text-xs text-green-600">+2 from yesterday</p>
+                <p className="text-2xl font-bold text-gray-900">0</p>
+                <p className="text-xs text-gray-600">No data available</p>
               </div>
             </div>
           </div>
@@ -180,8 +158,8 @@ function StaffDashboard() {
                 <p className="text-sm font-medium text-gray-600">
                   Tables Served
                 </p>
-                <p className="text-2xl font-bold text-gray-900">8</p>
-                <p className="text-xs text-green-600">+1 this hour</p>
+                <p className="text-2xl font-bold text-gray-900">0</p>
+                <p className="text-xs text-gray-600">No data available</p>
               </div>
             </div>
           </div>
@@ -195,8 +173,8 @@ function StaffDashboard() {
                 <p className="text-sm font-medium text-gray-600">
                   Avg. Wait Time
                 </p>
-                <p className="text-2xl font-bold text-gray-900">15m</p>
-                <p className="text-xs text-green-600">-3m improvement</p>
+                <p className="text-2xl font-bold text-gray-900">0m</p>
+                <p className="text-xs text-gray-600">No data available</p>
               </div>
             </div>
           </div>
@@ -210,8 +188,8 @@ function StaffDashboard() {
                 <p className="text-sm font-medium text-gray-600">
                   Today's Revenue
                 </p>
-                <p className="text-2xl font-bold text-gray-900">₱45.2K</p>
-                <p className="text-xs text-green-600">+12% vs yesterday</p>
+                <p className="text-2xl font-bold text-gray-900">₱0</p>
+                <p className="text-xs text-gray-600">No data available</p>
               </div>
             </div>
           </div>
@@ -231,43 +209,11 @@ function StaffDashboard() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                  <div>
-                    <p className="font-medium text-gray-900">Order #1234</p>
-                    <p className="text-sm text-gray-600">Table 3 • 4 items</p>
-                  </div>
-                </div>
-                <span className="text-sm text-yellow-700 font-medium">
-                  Preparing
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <div>
-                    <p className="font-medium text-gray-900">Order #1233</p>
-                    <p className="text-sm text-gray-600">Table 7 • 2 items</p>
-                  </div>
-                </div>
-                <span className="text-sm text-green-700 font-medium">
-                  Ready
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <div>
-                    <p className="font-medium text-gray-900">Order #1232</p>
-                    <p className="text-sm text-gray-600">Takeout • 6 items</p>
-                  </div>
-                </div>
-                <span className="text-sm text-blue-700 font-medium">
-                  Served
-                </span>
+              <div className="text-center py-8">
+                <p className="text-gray-500">No orders available</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Orders will appear here when available
+                </p>
               </div>
             </div>
 
@@ -288,45 +234,11 @@ function StaffDashboard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              {[1, 2, 3, 4, 5, 6].map((tableNum) => {
-                const isOccupied = Math.random() > 0.5;
-                const isReserved = Math.random() > 0.7;
-
-                let status = "Available";
-                let bgColor = "bg-green-100";
-                let textColor = "text-green-800";
-                let borderColor = "border-green-200";
-
-                if (isReserved) {
-                  status = "Reserved";
-                  bgColor = "bg-yellow-100";
-                  textColor = "text-yellow-800";
-                  borderColor = "border-yellow-200";
-                } else if (isOccupied) {
-                  status = "Occupied";
-                  bgColor = "bg-red-100";
-                  textColor = "text-red-800";
-                  borderColor = "border-red-200";
-                }
-
-                return (
-                  <div
-                    key={tableNum}
-                    className={`p-4 rounded-lg border ${bgColor} ${borderColor} text-center cursor-pointer hover:shadow-md transition-shadow`}
-                  >
-                    <div className="text-lg font-bold text-gray-900">
-                      Table {tableNum}
-                    </div>
-                    <div className={`text-sm font-medium ${textColor}`}>
-                      {status}
-                    </div>
-                    {isOccupied && (
-                      <div className="text-xs text-gray-600 mt-1">45 min</div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="text-center py-8">
+              <p className="text-gray-500">No table data available</p>
+              <p className="text-sm text-gray-400 mt-2">
+                Table status will appear here when available
+              </p>
             </div>
 
             <div className="mt-4 flex items-center justify-center space-x-4 text-sm">
@@ -354,46 +266,12 @@ function StaffDashboard() {
               Recent Activity
             </h2>
             <div className="space-y-4">
-              {[
-                {
-                  action: "Order completed",
-                  time: "2 min ago",
-                  type: "success",
-                },
-                { action: "Table 5 cleared", time: "5 min ago", type: "info" },
-                { action: "New reservation", time: "12 min ago", type: "info" },
-                {
-                  action: "Inventory updated",
-                  time: "1 hour ago",
-                  type: "warning",
-                },
-                {
-                  action: "Staff shift started",
-                  time: "2 hours ago",
-                  type: "info",
-                },
-              ].map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg"
-                >
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      activity.type === "success"
-                        ? "bg-green-500"
-                        : activity.type === "warning"
-                        ? "bg-yellow-500"
-                        : "bg-blue-500"
-                    }`}
-                  ></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">
-                      {activity.action}
-                    </p>
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
+              <div className="text-center py-8">
+                <p className="text-gray-500">No recent activity</p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Activity will appear here when available
+                </p>
+              </div>
             </div>
           </div>
 

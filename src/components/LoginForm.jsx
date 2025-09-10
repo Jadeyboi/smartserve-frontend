@@ -29,8 +29,7 @@ function LoginForm() {
 
       localStorage.setItem("isAuthenticated", "true");
       localStorage.setItem("currentUser", JSON.stringify(data.user));
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+      localStorage.setItem("idToken", data.idToken);
 
       navigate("/dashboard");
     } catch (err) {

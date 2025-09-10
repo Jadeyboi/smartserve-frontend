@@ -17,6 +17,7 @@ import {
   StaffLogin,
   StaffDashboardPage,
   StaffOrdersPage,
+  PendingPage,
 } from "./pages";
 
 // Toast context for global toast access
@@ -74,6 +75,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/pending" element={<PendingPage />} />
           <Route path="/branch/:id" element={<RestaurantBranchPage />} />
           <Route path="/add-branch" element={<AddRestaurantBranch />} />
           <Route path="/staff-login" element={<StaffLogin />} />

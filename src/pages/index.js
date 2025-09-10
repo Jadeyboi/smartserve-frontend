@@ -10,3 +10,4 @@ export { default as AddRestaurantBranch } from "./AddRestaurantBranch";
 export { default as StaffLogin } from "./StaffLogin";
 export { default as StaffDashboardPage } from "./StaffDashboardPage";
 export { default as StaffOrdersPage } from "./StaffOrdersPage";
+export { default as PendingPage } from "./PendingPage";

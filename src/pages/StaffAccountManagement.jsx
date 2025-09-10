@@ -41,53 +41,8 @@ function StaffAccountManagement() {
     contactNumber: "",
   });
 
-  // Sample staff data
-  const [staffMembers, setStaffMembers] = useState([
-    {
-      id: 1,
-      name: "Maria Santos",
-      email: "maria.santos@pizzanapoleon.com",
-      phone: "+63 917 123 4567",
-      role: "Manager",
-      status: "Active",
-      joinDate: "2022-03-15",
-      avatar: "MS",
-      permissions: ["orders", "inventory", "staff", "reports"],
-    },
-    {
-      id: 2,
-      name: "Juan Dela Cruz",
-      email: "juan.delacruz@pizzanapoleon.com",
-      phone: "+63 918 234 5678",
-      role: "Chef",
-      status: "Active",
-      joinDate: "2021-08-20",
-      avatar: "JD",
-      permissions: ["orders", "inventory"],
-    },
-    {
-      id: 3,
-      name: "Ana Reyes",
-      email: "ana.reyes@pizzanapoleon.com",
-      phone: "+63 919 345 6789",
-      role: "Server",
-      status: "Active",
-      joinDate: "2023-01-10",
-      avatar: "AR",
-      permissions: ["orders"],
-    },
-    {
-      id: 4,
-      name: "Carlos Mendoza",
-      email: "carlos.mendoza@pizzanapoleon.com",
-      phone: "+63 920 456 7890",
-      role: "Cashier",
-      status: "Inactive",
-      joinDate: "2022-11-05",
-      avatar: "CM",
-      permissions: ["orders", "reports"],
-    },
-  ]);
+  // Staff data state
+  const [staffMembers, setStaffMembers] = useState([]);
 
   const roles = [
     "Server",

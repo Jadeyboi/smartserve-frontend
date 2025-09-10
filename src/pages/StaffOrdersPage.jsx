@@ -15,56 +15,8 @@ function StaffOrdersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  // Mock orders data
-  const [orders] = useState([
-    {
-      id: "1234",
-      table: "Table 3",
-      items: 4,
-      total: "₱1,250",
-      status: "preparing",
-      time: "2 min ago",
-      customer: "John Smith",
-      itemsList: ["Margherita Pizza", "Caesar Salad", "Garlic Bread", "Coke"],
-    },
-    {
-      id: "1233",
-      table: "Table 7",
-      items: 2,
-      total: "₱680",
-      status: "ready",
-      time: "5 min ago",
-      customer: "Maria Garcia",
-      itemsList: ["Pepperoni Pizza", "Water"],
-    },
-    {
-      id: "1232",
-      table: "Takeout",
-      items: 6,
-      total: "₱2,100",
-      status: "served",
-      time: "15 min ago",
-      customer: "Carlos Rodriguez",
-      itemsList: [
-        "Family Combo",
-        "Extra Cheese",
-        "Garlic Bread",
-        "Coke",
-        "Sprite",
-        "Ice Cream",
-      ],
-    },
-    {
-      id: "1231",
-      table: "Table 5",
-      items: 3,
-      total: "₱890",
-      status: "preparing",
-      time: "8 min ago",
-      customer: "Ana Santos",
-      itemsList: ["Hawaiian Pizza", "French Fries", "Lemonade"],
-    },
-  ]);
+  // Orders data state
+  const [orders] = useState([]);
 
   const getStatusColor = (status) => {
     switch (status) {

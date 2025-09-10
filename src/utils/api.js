@@ -2,14 +2,14 @@ const API_BASE_URL = "http://127.0.0.1:5050";
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem("idToken");
   console.log(
     "Retrieved token from localStorage:",
     token ? `${token.substring(0, 20)}...` : "No token found"
   );
 
   if (!token) {
-    console.warn("No access token found in localStorage");
+    console.warn("No idToken found in localStorage");
     return {
       "Content-Type": "application/json",
     };
@@ -125,8 +125,7 @@ export const authAPI = {
 
   logout: async () => {
     // Backend doesn't have logout endpoint, just clear local storage
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("idToken");
     localStorage.removeItem("user");
     return { message: "Logged out successfully" };
   },
@@ -413,6 +412,104 @@ export const aiAPI = {
   },
 };
 
+// Reservations API calls - Updated to match backend
+export const reservationsAPI = {
+  // Get pending reservations for a restaurant
+  getPending: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/reservations/${restaurantId}/pending`);
+      return response.pending_reservations || [];
+    } catch (error) {
+      console.error("Failed to get pending reservations:", error);
+      throw error;
+    }
+  },
+
+  // Get confirmed reservations for a restaurant
+  getConfirmed: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/reservations/${restaurantId}/confirmed`);
+      return response.confirmed_reservations || [];
+    } catch (error) {
+      console.error("Failed to get confirmed reservations:", error);
+      throw error;
+    }
+  },
+
+  // Get rejected reservations for a restaurant
+  getRejected: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/reservations/${restaurantId}/rejected`);
+      return response.rejected_reservations || [];
+    } catch (error) {
+      console.error("Failed to get rejected reservations:", error);
+      throw error;
+    }
+  },
+
+  // Get all reservations for a restaurant
+  getAll: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/reservations/${restaurantId}`);
+      return response.reservations || [];
+    } catch (error) {
+      console.error("Failed to get all reservations:", error);
+      throw error;
+    }
+  },
+
+  // Accept a reservation
+  accept: async (reservationId) => {
+    try {
+      const response = await apiCall(`/reservations/${reservationId}/accept`, {
+        method: "PUT",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to accept reservation:", error);
+      throw error;
+    }
+  },
+
+  // Reject a reservation
+  reject: async (reservationId) => {
+    try {
+      const response = await apiCall(`/reservations/${reservationId}/reject`, {
+        method: "PUT",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to reject reservation:", error);
+      throw error;
+    }
+  },
+
+  // Create a new reservation (for patrons)
+  create: async (reservationData) => {
+    try {
+      const response = await apiCall("/reservations/create/reservation", {
+        method: "POST",
+        body: JSON.stringify(reservationData),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to create reservation:", error);
+      throw error;
+    }
+  },
+
+  // Get patron's reservations
+  getPatronReservations: async (patronId) => {
+    try {
+      const response = await apiCall(`/reservations/patrons/${patronId}`);
+      return response;
+    } catch (error) {
+      console.error("Failed to get patron reservations:", error);
+      throw error;
+    }
+  },
+};
+
 // Staff Management API calls - Updated to match backend
 export const staffAPI = {
   getAll: async () => {
@@ -493,7 +590,7 @@ export const staffAPI = {
 
 // Utility functions
 export const isAuthenticated = () => {
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem("idToken");
   if (!token) return false;
 
   try {
@@ -514,14 +611,17 @@ export const isAuthenticated = () => {
 };
 
 export const getCurrentUser = () => {
-  const user = localStorage.getItem("user");
+  // Try both possible localStorage keys for user data
+  const user =
+    localStorage.getItem("currentUser") || localStorage.getItem("user");
   return user ? JSON.parse(user) : null;
 };
 
 export const clearAuth = () => {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
+  localStorage.removeItem("idToken");
   localStorage.removeItem("user");
+  localStorage.removeItem("currentUser");
+  localStorage.removeItem("isAuthenticated");
 };
 
 export default {
@@ -530,6 +630,7 @@ export default {
   menus: menuAPI,
   ai: aiAPI,
   staff: staffAPI,
+  reservations: reservationsAPI,
   utils: {
     isAuthenticated,
     getCurrentUser,
