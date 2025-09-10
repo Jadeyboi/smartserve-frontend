@@ -34,6 +34,12 @@ function Header() {
             <Link to="/login" className="btn-secondary">
               Login
             </Link>
+            <Link
+              to="/staff-login"
+              className="text-blue-600 hover:text-blue-700 transition-colors duration-200 font-medium"
+            >
+              Staff Login
+            </Link>
           </nav>
         </div>
       </div>

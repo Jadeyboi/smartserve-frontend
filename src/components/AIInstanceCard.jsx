@@ -1,7 +1,18 @@
-import { Play, Square, Settings, Trash2 } from "lucide-react";
+import { Play, Square, Settings, Trash2, Camera } from "lucide-react";
+import { useState, useEffect } from "react";
 
 function AIInstanceCard({ ai, onStart, onStop, onDelete }) {
-  const { id, name, url, status, isRunning, lastActive } = ai;
+  const { id, name, url, status, isRunning, lastActive, cameraIndex } = ai;
+  const [videoKey, setVideoKey] = useState(Date.now());
+  const [videoError, setVideoError] = useState(false);
+
+  // Refresh video feed every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVideoKey(Date.now());
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleStart = () => {
     onStart(id);
@@ -13,6 +24,19 @@ function AIInstanceCard({ ai, onStart, onStop, onDelete }) {
 
   const handleDelete = () => {
     onDelete(id);
+  };
+
+  const handleVideoError = () => {
+    setVideoError(true);
+  };
+
+  const handleVideoLoad = () => {
+    setVideoError(false);
+  };
+
+  const refreshVideo = () => {
+    setVideoKey(Date.now());
+    setVideoError(false);
   };
 
   const getStatusColor = (status) => {
@@ -75,6 +99,50 @@ function AIInstanceCard({ ai, onStart, onStop, onDelete }) {
         >
           <Trash2 className="w-4 h-4" />
         </button>
+      </div>
+
+      {/* Live Video Feed for this AI instance */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2">
+            <Camera className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-gray-700">Live Feed</span>
+          </div>
+          <button
+            onClick={refreshVideo}
+            className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
+            title="Refresh video feed"
+          >
+            ↻
+          </button>
+        </div>
+        <div className="bg-gray-900 rounded-lg overflow-hidden h-32">
+          {!videoError ? (
+            <img
+              key={videoKey}
+              src={`http://127.0.0.1:5050/ai/camera-stream/${
+                cameraIndex || 0
+              }?t=${videoKey}`}
+              alt={`Live feed from ${name}`}
+              className="w-full h-full object-cover"
+              onError={handleVideoError}
+              onLoad={handleVideoLoad}
+            />
+          ) : (
+            <div className="h-full flex items-center justify-center text-white text-sm">
+              <div className="text-center">
+                <Camera className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <p>Camera {cameraIndex || 0}</p>
+                <button
+                  onClick={refreshVideo}
+                  className="mt-2 px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex space-x-3">

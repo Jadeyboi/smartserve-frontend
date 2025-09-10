@@ -2,14 +2,14 @@ const API_BASE_URL = "http://127.0.0.1:5050";
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem("idToken");
   console.log(
     "Retrieved token from localStorage:",
     token ? `${token.substring(0, 20)}...` : "No token found"
   );
 
   if (!token) {
-    console.warn("No access token found in localStorage");
+    console.warn("No idToken found in localStorage");
     return {
       "Content-Type": "application/json",
     };
@@ -22,8 +22,10 @@ const getAuthHeaders = () => {
   };
 };
 
-// Generic API call function
-const apiCall = async (endpoint, options = {}) => {
+// Generic API call function with retry mechanism
+const apiCall = async (endpoint, options = {}, retryCount = 0) => {
+  const maxRetries = 2;
+
   try {
     // Check if token is expired before making the call
     if (!isAuthenticated()) {
@@ -38,7 +40,11 @@ const apiCall = async (endpoint, options = {}) => {
     }
 
     const headers = getAuthHeaders();
-    console.log(`Making API call to: ${API_BASE_URL}${endpoint}`);
+    console.log(
+      `Making API call to: ${API_BASE_URL}${endpoint} (attempt ${
+        retryCount + 1
+      })`
+    );
     console.log("Headers:", headers);
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -71,7 +77,32 @@ const apiCall = async (endpoint, options = {}) => {
 
     return await response.json();
   } catch (error) {
-    console.error(`API call to ${endpoint} failed:`, error);
+    console.error(
+      `API call to ${endpoint} failed (attempt ${retryCount + 1}):`,
+      error
+    );
+
+    // Handle specific error types
+    if (
+      error.name === "TypeError" &&
+      error.message.includes("Failed to fetch")
+    ) {
+      // This usually indicates CORS or network issues
+      console.warn(
+        `CORS or network error for ${endpoint}. This might be due to:`
+      );
+      console.warn("1. Backend server not running");
+      console.warn("2. CORS not configured properly");
+      console.warn("3. Network connectivity issues");
+
+      // Retry logic for network issues
+      if (retryCount < maxRetries) {
+        console.log(`Retrying API call to ${endpoint} in 1 second...`);
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        return apiCall(endpoint, options, retryCount + 1);
+      }
+    }
+
     throw error;
   }
 };
@@ -94,8 +125,7 @@ export const authAPI = {
 
   logout: async () => {
     // Backend doesn't have logout endpoint, just clear local storage
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("idToken");
     localStorage.removeItem("user");
     return { message: "Logged out successfully" };
   },
@@ -180,66 +210,303 @@ export const menuAPI = {
   },
 };
 
-// AI Management API calls - Updated to match backend
+// AI Management API calls
 export const aiAPI = {
-  getStatus: async () => {
-    // Backend doesn't have general status endpoint
-    return {
-      cameraStatus: "Online",
-      lastUpdate: "5 seconds ago",
-      aiConfidence: 96.2,
-    };
+  // Get all AIs for a restaurant
+  getAIs: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/ai/list?restaurantID=${restaurantId}`);
+      return response.ais || [];
+    } catch (error) {
+      console.error("Failed to get AIs:", error);
+      throw error;
+    }
   },
 
+  // Add new AI
+  addAI: async (aiData) => {
+    try {
+      const response = await apiCall("/ai/add/ai", {
+        method: "POST",
+        body: JSON.stringify(aiData),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to add AI:", error);
+      throw error;
+    }
+  },
+
+  // Start AI detection
+  startDetection: async (restaurantId, aiId) => {
+    try {
+      const response = await apiCall("/ai/start", {
+        method: "POST",
+        body: JSON.stringify({
+          restaurantID: restaurantId,
+          aiID: aiId,
+        }),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to start AI detection:", error);
+      throw error;
+    }
+  },
+
+  // Test YOLO with live camera
+  testCameraDetection: async (restaurantId, cameraIndex = "0") => {
+    try {
+      const response = await apiCall("/ai/test-camera", {
+        method: "POST",
+        body: JSON.stringify({
+          restaurantID: restaurantId,
+          cameraIndex: cameraIndex,
+        }),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to test camera detection:", error);
+      throw error;
+    }
+  },
+
+  // Start camera detection (simple GET endpoint)
+  startCameraDetection: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/ai/start-camera/${restaurantId}`);
+      return response;
+    } catch (error) {
+      console.error("Failed to start camera detection:", error);
+      throw error;
+    }
+  },
+
+  // Stop AI detection
+  stopDetection: async (aiId) => {
+    try {
+      const response = await apiCall(`/ai/stop/${aiId}`, {
+        method: "POST",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to stop AI detection:", error);
+      throw error;
+    }
+  },
+
+  // Get latest detection data
+  getLatestDetection: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/ai/latest/${restaurantId}`);
+      return response;
+    } catch (error) {
+      console.error("Failed to get latest detection:", error);
+      // Return fallback data if backend fails
+      return {
+        chairs: {
+          chair_1: "occupied",
+          chair_2: "vacant",
+          chair_3: "occupied",
+          chair_4: "vacant",
+        },
+        tables: {
+          table_1: "occupied",
+          table_2: "occupied",
+          table_3: "vacant",
+          table_4: "occupied",
+        },
+        time: new Date().toISOString(),
+      };
+    }
+  },
+
+  // Get table status for a restaurant
   getTableStatus: async (restaurantId) => {
-    // Backend doesn't have table status endpoint yet
-    // Return mock data for now
-    return {
-      cameraStatus: "Online",
-      lastUpdate: "5 seconds ago",
-      aiConfidence: 96.2,
-      tableStatus: [
-        {
-          id: 1,
-          status: "occupied",
-          seats: 4,
-          occupiedSeats: 4,
-          timeOccupied: "45 min",
-        },
-        {
-          id: 2,
-          status: "vacant",
-          seats: 6,
-          occupiedSeats: 0,
-          timeOccupied: "0 min",
-        },
-      ],
-    };
+    try {
+      const response = await apiCall(`/ai/latest/${restaurantId}`);
+      return response;
+    } catch (error) {
+      console.error("Failed to get table status:", error);
+      // Return fallback data if backend fails
+      return {
+        cameraStatus: "Online",
+        lastUpdate: "5 seconds ago",
+        aiConfidence: 96.2,
+        tableStatus: [
+          {
+            id: 1,
+            status: "occupied",
+            seats: 4,
+            occupiedSeats: 4,
+            timeOccupied: "45 min",
+          },
+          {
+            id: 2,
+            status: "vacant",
+            seats: 6,
+            occupiedSeats: 0,
+            timeOccupied: "0 min",
+          },
+        ],
+      };
+    }
   },
 
-  updateTableStatus: async (restaurantId, tableData) => {
-    // Backend doesn't have table status update endpoint yet
-    throw new Error("Table status update not implemented");
+  // Update detection data
+  updateDetection: async () => {
+    try {
+      const response = await apiCall("/ai/update", {
+        method: "POST",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to update detection:", error);
+      throw error;
+    }
   },
 
-  // Backend AI endpoints
-  startDetection: async () => {
-    return apiCall("/ai/start", { method: "POST" });
+  // Switch camera
+  switchCamera: async (aiId, direction) => {
+    try {
+      const response = await apiCall(`/ai/${direction}/${aiId}`, {
+        method: "POST",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to switch camera:", error);
+      throw error;
+    }
   },
 
-  stopDetection: async () => {
-    return apiCall("/ai/stop", { method: "POST" });
+  // Get video feed URL
+  getVideoFeedUrl: (aiId) => {
+    return `${API_BASE_URL}/ai/video_feed/${aiId}`;
   },
 
-  getLatestDetection: async () => {
-    return apiCall("/ai/latest");
+  // Update AI settings
+  updateAI: async (aiId, aiData) => {
+    try {
+      const response = await apiCall(`/ai/update/${aiId}`, {
+        method: "PUT",
+        body: JSON.stringify(aiData),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to update AI:", error);
+      throw error;
+    }
   },
 
-  updateDetection: async (data) => {
-    return apiCall("/ai/update", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+  // Delete AI
+  deleteAI: async (aiId) => {
+    try {
+      const response = await apiCall(`/ai/delete/${aiId}`, {
+        method: "DELETE",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to delete AI:", error);
+      throw error;
+    }
+  },
+};
+
+// Reservations API calls - Updated to match backend
+export const reservationsAPI = {
+  // Get pending reservations for a restaurant
+  getPending: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/reservations/${restaurantId}/pending`);
+      return response.pending_reservations || [];
+    } catch (error) {
+      console.error("Failed to get pending reservations:", error);
+      throw error;
+    }
+  },
+
+  // Get confirmed reservations for a restaurant
+  getConfirmed: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/reservations/${restaurantId}/confirmed`);
+      return response.confirmed_reservations || [];
+    } catch (error) {
+      console.error("Failed to get confirmed reservations:", error);
+      throw error;
+    }
+  },
+
+  // Get rejected reservations for a restaurant
+  getRejected: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/reservations/${restaurantId}/rejected`);
+      return response.rejected_reservations || [];
+    } catch (error) {
+      console.error("Failed to get rejected reservations:", error);
+      throw error;
+    }
+  },
+
+  // Get all reservations for a restaurant
+  getAll: async (restaurantId) => {
+    try {
+      const response = await apiCall(`/reservations/${restaurantId}`);
+      return response.reservations || [];
+    } catch (error) {
+      console.error("Failed to get all reservations:", error);
+      throw error;
+    }
+  },
+
+  // Accept a reservation
+  accept: async (reservationId) => {
+    try {
+      const response = await apiCall(`/reservations/${reservationId}/accept`, {
+        method: "PUT",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to accept reservation:", error);
+      throw error;
+    }
+  },
+
+  // Reject a reservation
+  reject: async (reservationId) => {
+    try {
+      const response = await apiCall(`/reservations/${reservationId}/reject`, {
+        method: "PUT",
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to reject reservation:", error);
+      throw error;
+    }
+  },
+
+  // Create a new reservation (for patrons)
+  create: async (reservationData) => {
+    try {
+      const response = await apiCall("/reservations/create/reservation", {
+        method: "POST",
+        body: JSON.stringify(reservationData),
+      });
+      return response;
+    } catch (error) {
+      console.error("Failed to create reservation:", error);
+      throw error;
+    }
+  },
+
+  // Get patron's reservations
+  getPatronReservations: async (patronId) => {
+    try {
+      const response = await apiCall(`/reservations/patrons/${patronId}`);
+      return response;
+    } catch (error) {
+      console.error("Failed to get patron reservations:", error);
+      throw error;
+    }
   },
 };
 
@@ -323,7 +590,7 @@ export const staffAPI = {
 
 // Utility functions
 export const isAuthenticated = () => {
-  const token = localStorage.getItem("access_token");
+  const token = localStorage.getItem("idToken");
   if (!token) return false;
 
   try {
@@ -344,14 +611,17 @@ export const isAuthenticated = () => {
 };
 
 export const getCurrentUser = () => {
-  const user = localStorage.getItem("user");
+  // Try both possible localStorage keys for user data
+  const user =
+    localStorage.getItem("currentUser") || localStorage.getItem("user");
   return user ? JSON.parse(user) : null;
 };
 
 export const clearAuth = () => {
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
+  localStorage.removeItem("idToken");
   localStorage.removeItem("user");
+  localStorage.removeItem("currentUser");
+  localStorage.removeItem("isAuthenticated");
 };
 
 export default {
@@ -360,6 +630,7 @@ export default {
   menus: menuAPI,
   ai: aiAPI,
   staff: staffAPI,
+  reservations: reservationsAPI,
   utils: {
     isAuthenticated,
     getCurrentUser,

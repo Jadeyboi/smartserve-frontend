@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ChefHat, User, LogOut } from "lucide-react";
+import { ChefHat, User, LogOut, Bell, Home, BarChart3 } from "lucide-react";
 
 function DashboardHeader() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
     // Clear the authentication token
-    localStorage.removeItem("access_token");
+    localStorage.removeItem("idToken");
     // Redirect to login page
     navigate("/login");
   };
@@ -22,6 +22,24 @@ function DashboardHeader() {
             </div>
             <span className="text-2xl font-bold text-gray-900">SmartServe</span>
           </Link>
+
+          {/* Navigation Menu */}
+          <nav className="hidden md:flex items-center space-x-6">
+            <Link
+              to="/dashboard"
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            >
+              <Home className="w-4 h-4" />
+              <span>Dashboard</span>
+            </Link>
+            <Link
+              to="/ai-management"
+              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span>AI Management</span>
+            </Link>
+          </nav>
 
           {/* User Profile */}
           <div className="flex items-center space-x-4">

@@ -13,7 +13,7 @@ function Dashboard() {
 
   // Fetch restaurants from backend
   const fetchRestaurants = () => {
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("idToken");
     console.log(
       "Fetching restaurants with token:",
       token ? `${token.substring(0, 20)}...` : "No token"
@@ -68,39 +68,9 @@ function Dashboard() {
             monthlyRevenue: "₱0", // Default
           }));
 
-          // If no restaurants found, add a sample restaurant for testing
+          // If no restaurants found, show empty state
           if (transformedData.length === 0) {
-            console.log("No restaurants found, adding sample data for testing");
-            transformedData.push({
-              id: "sample-1",
-              name: "Sample Restaurant",
-              location: "123 Sample Street, Sample City",
-              status: "active",
-              totalTables: 10,
-              totalChairs: 40,
-              occupancyRate: 75,
-              rating: 4.5,
-              phone: "+63 123 456 7890",
-              email: "sample@restaurant.com",
-              operatingHours: "9:00 AM - 10:00 PM",
-              manager: "John Doe",
-              staffCount: 8,
-              lastUpdated: "2 hours ago",
-              address: {
-                street: "123 Sample Street",
-                area: "Sample Area",
-                city: "Sample City",
-                province: "Sample Province",
-                zipCode: "1234",
-                country: "Philippines",
-              },
-              cuisine: "International",
-              features: ["Dine-in", "Takeout"],
-              paymentMethods: ["Cash", "Credit Card"],
-              averageOrderValue: "₱500",
-              dailyCustomers: "100-150",
-              monthlyRevenue: "₱1.5M",
-            });
+            console.log("No restaurants found");
           }
 
           console.log("Original backend data:", data);
@@ -115,8 +85,7 @@ function Dashboard() {
         if (err.response?.status === 401) {
           setError("Authentication failed. Please login again.");
           // Clear auth data and redirect to login
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
+          localStorage.removeItem("idToken");
           localStorage.removeItem("user");
           navigate("/login");
         } else {
